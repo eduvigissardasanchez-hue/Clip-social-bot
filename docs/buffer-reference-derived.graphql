@@ -1,0 +1,1931 @@
+# Derived from https://developers.buffer.com/reference.md on 2026-10-09
+type Query {
+account: Account!
+aggregatedPostMetrics(input: AggregatedPostMetricsInput!): AggregatedPostMetrics!
+channel(input: ChannelInput!): Channel!
+channels(input: ChannelsInput!): [Channel!]!
+configuration(input: ConfigurationInput!): Configuration!
+contentItem(input: ContentItemInput!): ContentItem!
+contentItems(after: String, first: Int, input: ContentItemsInput!): ContentItemsConnection!
+dailyPostingLimits(input: DailyPostingLimitsInput!): [DailyPostingLimitStatus!]!
+ideaGroups(input: IdeaGroupsInput!): [IdeaGroup!]!
+ideas(after: String, first: Int, input: IdeasInput!): IdeasConnection!
+instagramAudio(input: InstagramAudioInput!): InstagramAudioPayload!
+instagramAudioCatalog(input: InstagramAudioCatalogInput!): InstagramAudioCatalogPayload!
+post(input: PostInput!): Post!
+posts(after: String, first: Int, input: PostsInput!): PostsResults!
+postTemplate(input: PostTemplateInput!): PostTemplate
+postTemplates(after: String, first: Int, input: PostTemplatesInput!): PostTemplatesConnection!
+searchInstagramAudio(input: SearchInstagramAudioInput!): SearchInstagramAudioPayload!
+searchInstagramAudioCatalog(input: SearchInstagramAudioCatalogInput!): InstagramAudioCatalogPayload!
+snippets(after: String, first: Int, input: SnippetsInput!): SnippetsConnection!
+tag(input: TagByIdInput!): Tag
+tagsV2(after: String, first: Int, input: TagsInput!): TagsConnection!
+trendingInstagramAudio(input: TrendingInstagramAudioInput!): SearchInstagramAudioPayload!
+}
+
+type Mutation {
+addPostToContentItem(input: AddPostToContentItemInput!): AddPostToContentItemPayload!
+createContentItem(input: CreateContentItemInput!): CreateContentItemPayload!
+createContentItemDraft(input: CreateContentItemDraftInput!): CreateContentItemDraftPayload!
+createIdea(input: CreateIdeaInput!): CreateIdeaPayload!
+createPost(input: CreatePostInput!): PostActionPayload!
+createPostTemplate(input: CreatePostTemplateInput!): CreatePostTemplatePayload!
+createSnippet(input: CreateSnippetInput!): CreateSnippetPayload!
+createTag(input: CreateTagInput!): CreateTagPayload!
+deleteContentItem(input: DeleteContentItemInput!): DeleteContentItemPayload!
+deletePost(input: DeletePostInput!): DeletePostPayload!
+deletePostTemplate(input: DeletePostTemplateInput!): DeletePostTemplatePayload!
+deleteSnippet(input: DeleteSnippetInput!): DeleteSnippetPayload!
+deleteTag(input: DeleteTagInput!): DeleteTagPayload!
+editPost(input: EditPostInput!): PostActionPayload!
+movePostInQueue(input: MovePostInQueueInput!): MovePostInQueuePayload!
+promoteContentItemDraftToPosts(input: PromoteContentItemDraftToPostsInput!): PromoteContentItemDraftToPostsPayload!
+removePostFromContentItem(input: RemovePostFromContentItemInput!): RemovePostFromContentItemPayload!
+updateContentItem(input: UpdateContentItemInput!): UpdateContentItemPayload!
+updateContentItemDraft(input: UpdateContentItemDraftInput!): UpdateContentItemDraftPayload!
+updatePostTemplate(input: UpdatePostTemplateInput!): UpdatePostTemplatePayload!
+updateSnippet(input: UpdateSnippetInput!): UpdateSnippetPayload!
+updateTag(input: UpdateTagInput!): UpdateTagPayload!
+}
+
+type Account {
+id: ID!
+email: String!
+backupEmail: String
+avatar: String!
+createdAt: DateTime
+organizations: [Organization!]!
+timezone: String
+name: String
+preferences: Preferences
+connectedApps: [ConnectedApp!]
+}
+
+type AddPostToContentItemSuccess {
+contentItem: ContentItem!
+post: Post!
+}
+
+type AggregatedPostMetrics {
+metrics: [PostMetric!]!
+metricsUpdatedAt: DateTime
+}
+
+type Annotation {
+content: String!
+indices: [Int!]!
+text: String!
+type: AnnotationType!
+url: String!
+}
+
+type Author {
+id: AccountId!
+avatar: String!
+email: String!
+isDeleted: Boolean!
+name: String
+urn: String
+}
+
+type BlueskyMetadata {
+serverUrl: String!
+}
+
+type BlueskyPostMetadata implements CommonPostMetadata & ThreadedPostMetadata {
+annotations: [Annotation!]!
+linkAttachment: LinkAttachment
+thread: [ThreadedPost!]!
+threadCount: Int!
+type: PostType!
+}
+
+type Channel {
+id: ChannelId!
+allowedActions: [ChannelAction!]!
+avatar: String!
+descriptor: String!
+displayName: String
+externalLink: String
+hasActiveMemberDevice: Boolean!
+isDisconnected: Boolean!
+isLocked: Boolean!
+isNew: Boolean!
+isQueuePaused: Boolean!
+linkShortening: ChannelLinkShortening!
+metadata: ChannelMetadata
+name: String!
+organizationId: OrganizationId!
+postingGoal: PostingGoal
+postingSchedule: [ScheduleV2!]!
+products: [Product!]
+scopes: [String]!
+service: Service!
+serviceId: String!
+showTrendingTopicSuggestions: Boolean!
+timezone: String!
+type: ChannelType!
+weeklyPostingLimit: WeeklyPostingLimit
+createdAt: DateTime!
+updatedAt: DateTime!
+}
+
+type ChannelConfiguration {
+authorizationStatus: [FeatureAuthorizationStatus!]!
+channelId: ChannelId!
+channelType: ChannelType!
+content: [ContentConfiguration!]!
+engagement: [EngagementTypeConfiguration!]!
+service: Service!
+}
+
+type ChannelLinkShortening {
+config: LinkShorteningConfig
+isEnabled: Boolean!
+}
+
+type ChannelRefreshRequired implements MutationError {
+channelIds: [ChannelId!]!
+message: String!
+}
+
+type Configuration {
+channels: [ChannelConfiguration!]!
+services: [ServiceConfiguration!]!
+}
+
+type ConnectedApp {
+category: ConnectedAppCategory
+clientId: ID!
+description: String!
+name: String!
+scopes: [String!]!
+userId: ID!
+website: String!
+createdAt: DateTime!
+}
+
+type ContentConfiguration {
+configurationContentTypes: [ConfigurationContentType!]!
+rules: [ValidationRule!]!
+supportedProperties: [ContentProperty!]!
+}
+
+type ContentItem {
+id: ContentItemId!
+accountId: AccountId!
+allowedActions: [ContentItemAction!]!
+author: Author
+body: ContentItemBody!
+organizationId: OrganizationId!
+tags: [Tag!]!
+targetDate: DateTime
+title: String
+createdAt: DateTime!
+}
+
+type ContentItemEdge {
+cursor: String!
+node: ContentItem!
+}
+
+type ContentItemsConnection {
+edges: [ContentItemEdge!]!
+pageInfo: PaginationPageInfo!
+totalCount: Int!
+}
+
+type ContentItemStateError implements MutationError {
+message: String!
+}
+
+type CountRule implements ValidationRule {
+max: Int
+min: Int
+property: ContentProperty!
+}
+
+type CreateContentItemDraftFailure implements MutationError {
+errors: [InvalidInputError!]!
+message: String!
+}
+
+type CreateContentItemDraftSuccess {
+contentItem: ContentItem!
+}
+
+type CreateContentItemFailure implements MutationError {
+errors: [CreateContentItemError!]!
+message: String!
+}
+
+type CreateContentItemSuccess {
+content: ContentItem!
+}
+
+type CreateContentItemVariantInvalidInputError implements MutationError {
+channelId: ChannelId!
+message: String!
+}
+
+type CreateContentItemVariantLimitReachedError implements MutationError {
+channelId: ChannelId!
+message: String!
+}
+
+type CreateContentItemVariantNotFoundError implements MutationError {
+channelId: ChannelId!
+message: String!
+}
+
+type CreatePostTemplateSuccess {
+postTemplate: PostTemplate!
+}
+
+type CreateSnippetSuccess {
+snippet: Snippet!
+}
+
+type DailyPostingLimitStatus {
+channelId: ChannelId!
+isAtLimit: Boolean!
+limit: Int
+scheduled: Int!
+sent: Int!
+}
+
+type DeleteContentItemFailure implements MutationError {
+errors: [PostNotDeletableError!]!
+message: String!
+}
+
+type DeletePostSuccess {
+id: PostId!
+}
+
+type DeleteSnippetSuccess {
+id: SnippetId!
+}
+
+type DeleteTagActionSuccess {
+id: TagId!
+}
+
+type DocumentAsset implements Asset {
+id: ID
+document: DocumentMetadata!
+mimeType: String!
+source: String!
+thumbnail: String!
+type: AssetType!
+}
+
+type DocumentMetadata {
+filesize: Int
+numPages: Int!
+thumbnails: [String!]!
+title: String
+}
+
+type DraftContent {
+id: DraftContentId!
+aiAssisted: Boolean!
+assets: [Asset!]!
+text: String!
+}
+
+type DuplicateError implements MutationError {
+message: String!
+}
+
+type DurationRule implements ValidationRule {
+maxDurationSeconds: Int!
+property: ContentProperty!
+}
+
+type EmptySuccess implements MutationSuccess {
+_empty: String!
+}
+
+type EngagementSupportedReaction {
+reactionType: ReactionType!
+visual: ReactionVisual!
+}
+
+type EngagementTypeConfiguration {
+engagementType: EngagementType!
+media: MediaConfiguration!
+metadata: EngagementMetadata
+reactions: ReactionsConfiguration!
+replying: ReplyingConfiguration!
+supportedAiFeatures: [AiFeature!]!
+syncData: SyncDataConfiguration!
+}
+
+type ExclusiveRule implements ValidationRule {
+conflictsWith: [ContentProperty!]!
+property: ContentProperty!
+}
+
+type FacebookMetadata {
+locationData: LocationData
+}
+
+type FacebookPostMetadata implements CommonPostMetadata {
+annotations: [Annotation!]!
+firstComment: String
+linkAttachment: LinkAttachment
+title: String
+type: PostType!
+}
+
+type FeatureAuthorizationStatus {
+feature: Feature!
+reason: String
+status: AuthorizationStatus!
+}
+
+type FileSizeRule implements ValidationRule {
+maxMegabytes: Int!
+property: ContentProperty!
+}
+
+type ForcedSyncConfiguration {
+forcedSyncRateLimit: ForcedSyncRateLimit
+pollInterval: Int!
+}
+
+type ForcedSyncRateLimit {
+allowedAttempts: Int!
+period: Int!
+}
+
+type FormatRule implements ValidationRule {
+allowedFormats: [MediaFormat!]!
+property: ContentProperty!
+}
+
+type GoogleBusinessEngagementMetadata {
+hasUserRating: Boolean!
+permanentNote: String!
+}
+
+type GoogleBusinessEventMetaData {
+button: GoogleBusinessPostActionType!
+endDate: DateTime!
+endTime: String
+isFullDayEvent: Boolean!
+link: String
+startDate: DateTime!
+startTime: String
+title: String!
+}
+
+type GoogleBusinessMetadata {
+locationData: LocationData
+}
+
+type GoogleBusinessOfferMetaData {
+code: String
+endDate: DateTime!
+link: String
+startDate: DateTime!
+terms: String
+title: String!
+}
+
+type GoogleBusinessPostMetadata implements CommonPostMetadata {
+annotations: [Annotation!]!
+details: GoogleBusinessPostDetails
+title: String
+type: PostType!
+}
+
+type GoogleBusinessWhatsNewMetaData {
+button: GoogleBusinessPostActionType!
+link: String
+}
+
+type IconVisual {
+icon: ReactionIcon!
+}
+
+type Idea {
+id: ID!
+content: IdeaContent!
+groupId: ID
+organizationId: ID!
+position: Float
+createdAt: Int!
+updatedAt: Int!
+}
+
+type IdeaContent {
+aiAssisted: Boolean!
+date: DateTime
+media: [IdeaMedia!]
+services: [Service!]!
+tags: [PublishingTag!]!
+text: String
+title: String
+}
+
+type IdeaEdge {
+cursor: String!
+node: Idea!
+}
+
+type IdeaGroup {
+id: ID!
+isLocked: Boolean!
+name: String!
+}
+
+type IdeaMedia {
+id: ID!
+alt: String
+size: Int
+source: IdeaMediaSource
+thumbnailUrl: String
+type: MediaType!
+url: String!
+}
+
+type IdeaMediaSource {
+id: String
+author: String
+authorUrl: String
+name: String!
+}
+
+type IdeaResponse {
+idea: Idea
+refreshIdeas: Boolean!
+}
+
+type IdeasConnection {
+edges: [IdeaEdge!]!
+pageInfo: PaginationPageInfo!
+}
+
+type ImageAsset implements Asset {
+id: ID
+image: ImageMetadata!
+mimeType: String!
+source: String!
+thumbnail: String!
+type: AssetType!
+}
+
+type ImageMetadata {
+altText: String!
+animatedThumbnail: String
+height: Int!
+isAnimated: Boolean!
+userTags: [UserTag!]
+width: Int!
+}
+
+type ImageVisual {
+url: String!
+}
+
+type InstagramAudio {
+id: String!
+coverArtworkUrl: URL
+creatorUsername: String
+displayArtist: String
+duration: Int!
+previewUrl: URL
+title: String!
+type: InstagramAudioType!
+}
+
+type InstagramAudioCatalogSuccess {
+audio: [InstagramAudio!]!
+failedAudioTypes: [InstagramAudioType!]!
+}
+
+type InstagramAudioSuccess {
+audio: InstagramAudio!
+}
+
+type InstagramGeolocation {
+id: String
+text: String
+}
+
+type InstagramMetadata {
+defaultToReminders: Boolean!
+}
+
+type InstagramPostMetadata implements CommonPostMetadata {
+annotations: [Annotation!]!
+firstComment: String
+geolocation: InstagramGeolocation
+isAiGenerated: Boolean!
+link: String
+shouldShareToFeed: Boolean!
+stickerFields: InstagramStickerFields
+type: PostType!
+}
+
+type InstagramStickerFields {
+music: String
+other: String
+products: String
+text: String
+topics: String
+}
+
+type InvalidInputError implements MutationError {
+message: String!
+}
+
+type LengthRule implements ValidationRule {
+maxLength: Int!
+property: ContentProperty!
+}
+
+type LimitReachedError implements MutationError {
+message: String!
+}
+
+type LinkAttachment implements ScrapedLink {
+expandedUrl: String
+text: String!
+thumbnail: String
+thumbnails: [String!]!
+title: String!
+url: String!
+}
+
+type LinkedInMetadata {
+shouldShowLinkedinAnalyticsRefreshBanner: Boolean!
+}
+
+type LinkedInPostMetadata implements CommonPostMetadata {
+annotations: [Annotation!]!
+firstComment: String
+linkAttachment: LinkAttachment
+type: PostType!
+}
+
+type LinkShorteningConfig {
+domain: String!
+name: String!
+}
+
+type LocationData {
+googleAccountId: String
+location: String
+mapsLink: String
+}
+
+type MastodonMetadata {
+maxCharacters: Int!
+serverUrl: String!
+}
+
+type MastodonPostMetadata implements CommonPostMetadata & ThreadedPostMetadata {
+annotations: [Annotation!]!
+spoilerText: String
+thread: [ThreadedPost!]!
+threadCount: Int!
+type: PostType!
+}
+
+type MediaConfiguration {
+additionalInformation: String
+disclaimer: String
+supportsMedia: Boolean!
+}
+
+type MemberConnection {
+totalCount: Int!
+}
+
+type Note {
+id: NoteId!
+allowedActions: [NoteAction!]!
+author: Author!
+text: String!
+type: NoteType!
+createdAt: DateTime!
+updatedAt: DateTime
+}
+
+type NotFoundError implements MutationError {
+message: String!
+}
+
+type Organization {
+id: OrganizationId!
+channelCount: Int!
+limits: OrganizationLimits!
+members: MemberConnection!
+name: String!
+ownerEmail: String!
+shouldEnforce2FASetup: Boolean!
+}
+
+type OrganizationLimits {
+channels: Int!
+generateContent: Int!
+ideaGroups: Int!
+ideas: Int!
+members: Int!
+postTemplates: Int!
+savedReplies: Int!
+scheduledPosts: Int!
+scheduledStoriesPerChannel: Int!
+scheduledThreadsPerChannel: Int!
+tags: Int!
+}
+
+type PaginationPageInfo {
+endCursor: String
+hasNextPage: Boolean!
+hasPreviousPage: Boolean!
+startCursor: String
+}
+
+type PinterestBoard {
+id: String!
+avatar: String
+description: String
+name: String!
+serviceId: String!
+url: String!
+}
+
+type PinterestMetadata {
+boards: [PinterestBoard!]!
+}
+
+type PinterestPostMetadata implements CommonPostMetadata {
+annotations: [Annotation!]!
+board: PinterestBoard
+title: String
+type: PostType!
+url: String
+}
+
+type Post {
+id: PostId!
+allowedActions: [PostAction!]!
+assets: [Asset!]!
+author: Author
+channel: Channel!
+channelId: ChannelId!
+channelService: Service!
+contentItemId: ContentItemId
+dueAt: DateTime
+error: PostPublishingError
+externalLink: String
+ideaId: IdeaId
+isCustomScheduled: Boolean!
+metadata: PostMetadata
+metrics: [PostMetric!]
+metricsUpdatedAt: DateTime
+notes: [Note!]!
+notificationStatus: NotificationStatus
+schedulingType: SchedulingType
+sentAt: DateTime
+sharedNow: Boolean!
+shareMode: ShareMode!
+status: PostStatus!
+tags: [Tag!]!
+text: String!
+via: PostVia!
+createdAt: DateTime!
+updatedAt: DateTime!
+}
+
+type PostActionSuccess {
+post: Post!
+}
+
+type PostChannelNotFoundError implements MutationError {
+channelId: ChannelId!
+message: String!
+}
+
+type PostContent {
+posts: [Post!]!
+}
+
+type PostingGoal {
+goal: Int!
+periodEnd: DateTime!
+periodStart: DateTime!
+scheduledCount: Int!
+sentCount: Int!
+status: PostingGoalStatus!
+}
+
+type PostInvalidInputError implements MutationError {
+channelId: ChannelId!
+message: String!
+}
+
+type PostLimitReachedError implements MutationError {
+channelId: ChannelId!
+message: String!
+}
+
+type PostMetric {
+description: String!
+name: String!
+type: PostMetricType!
+unit: PostMetricUnit!
+value: Float!
+}
+
+type PostNotDeletableError implements MutationError {
+channelId: ChannelId!
+message: String!
+}
+
+type PostPublishingError {
+message: String!
+rawError: String
+supportUrl: String
+}
+
+type PostsEdge {
+cursor: String!
+node: Post!
+}
+
+type PostsResults {
+edges: [PostsEdge!]
+pageInfo: PaginationPageInfo!
+}
+
+type PostTemplate {
+id: PostTemplateId!
+body: String!
+description: String!
+emoji: String!
+organizationId: OrganizationId!
+title: String!
+visibility: PostTemplateVisibility!
+createdAt: DateTime!
+updatedAt: DateTime!
+}
+
+type PostTemplateEdge {
+cursor: String!
+node: PostTemplate!
+}
+
+type PostTemplatesConnection {
+edges: [PostTemplateEdge!]!
+pageInfo: PaginationPageInfo!
+totalCount: Int!
+}
+
+type Preferences {
+timeFormat: String
+startOfWeek: String
+defaultScheduleOption: ScheduleOption!
+}
+
+type PromoteContentItemDraftToPostsFailure implements MutationError {
+errors: [PromoteContentItemDraftToPostsError!]!
+message: String!
+}
+
+type PromoteContentItemDraftToPostsSuccess {
+contentItem: ContentItem!
+}
+
+type PublishingTag {
+id: ID!
+color: String!
+colorName: TagColorName
+name: String!
+}
+
+type ReactionsConfiguration {
+requiresAuthorization: Boolean!
+restingIcon: ReactionIcon!
+supportedReactions: [EngagementSupportedReaction!]!
+}
+
+type RemovePostFromContentItemSuccess {
+contentItem: ContentItem!
+post: Post!
+}
+
+type ReplyingConfiguration {
+prefixReplyWithMention: Boolean!
+supportsReplying: Boolean!
+}
+
+type RequiresRule implements ValidationRule {
+property: ContentProperty!
+requires: [ContentProperty!]!
+}
+
+type RestProxyError implements MutationError {
+code: Int
+link: String
+message: String!
+}
+
+type RetweetMetadata implements ScrapedLink {
+id: String!
+text: String!
+thumbnails: [String!]!
+url: String!
+user: RetweetUserMetadata!
+createdAt: DateTime!
+}
+
+type RetweetUserMetadata {
+avatar: String!
+name: String!
+username: String!
+}
+
+type ScheduleV2 {
+day: DayOfWeek!
+paused: Boolean!
+times: [String!]!
+}
+
+type SearchInstagramAudioSuccess {
+audio: [InstagramAudio!]!
+}
+
+type ServiceConfiguration {
+channelType: ChannelType!
+content: [ContentConfiguration!]!
+engagement: [EngagementTypeConfiguration!]!
+service: Service!
+}
+
+type Snippet {
+id: SnippetId!
+name: String!
+text: String!
+}
+
+type SnippetEdge {
+cursor: String!
+node: Snippet!
+}
+
+type SnippetsConnection {
+edges: [SnippetEdge!]!
+pageInfo: PaginationPageInfo!
+}
+
+type SubstackPostMetadata implements CommonPostMetadata {
+annotations: [Annotation!]!
+linkAttachment: LinkAttachment
+type: PostType!
+}
+
+type SyncDataConfiguration {
+forcedSyncConfiguration: ForcedSyncConfiguration
+syncDataMechanism: SyncDataMechanism!
+}
+
+type Tag {
+id: TagId!
+color: String!
+colorName: TagColorName
+isLocked: Boolean!
+name: String!
+}
+
+type TagActionSuccess {
+tag: Tag!
+}
+
+type TagEdge {
+cursor: String!
+node: Tag!
+}
+
+type TagsConnection {
+edges: [TagEdge!]!
+pageInfo: PaginationPageInfo!
+totalCount: Int!
+}
+
+type ThreadedPost {
+assets: [Asset!]!
+linkAttachment: LinkAttachment
+metadata: ThreadItemMetadata
+text: String!
+}
+
+type ThreadItemBlueskyMetadata {
+linkAttachment: LinkAttachment
+}
+
+type ThreadItemMetadata {
+bluesky: ThreadItemBlueskyMetadata
+threads: ThreadItemThreadsMetadata
+}
+
+type ThreadItemThreadsMetadata {
+linkAttachment: LinkAttachment
+}
+
+type ThreadsPostMetadata implements CommonPostMetadata & ThreadedPostMetadata {
+annotations: [Annotation!]!
+linkAttachment: LinkAttachment
+locationId: String
+locationName: String
+thread: [ThreadedPost!]!
+threadCount: Int!
+topic: String
+type: PostType!
+}
+
+type TiktokMetadata {
+defaultToReminders: Boolean!
+}
+
+type TiktokPostMetadata implements CommonPostMetadata {
+annotations: [Annotation!]!
+isAiGenerated: Boolean!
+title: String
+type: PostType!
+}
+
+type TwitterMetadata {
+subscriptionType: String
+}
+
+type TwitterPostMetadata implements CommonPostMetadata & ThreadedPostMetadata {
+annotations: [Annotation!]!
+isAiGenerated: Boolean!
+retweet: RetweetMetadata
+thread: [ThreadedPost!]!
+threadCount: Int!
+type: PostType!
+}
+
+type UnauthorizedError implements MutationError {
+message: String!
+}
+
+type UnexpectedError implements MutationError {
+message: String!
+}
+
+type UpdateContentItemDraftFailure implements MutationError {
+errors: [UpdateContentItemDraftError!]!
+message: String!
+}
+
+type UpdateContentItemDraftSuccess {
+contentItem: ContentItem!
+}
+
+type UpdateContentItemFailure implements MutationError {
+errors: [InvalidInputError!]!
+message: String!
+}
+
+type UpdateContentItemSuccess {
+contentItem: ContentItem!
+}
+
+type UpdatePostTemplateSuccess {
+postTemplate: PostTemplate!
+}
+
+type UpdateSnippetSuccess {
+snippet: Snippet!
+}
+
+type UserTag {
+handle: String!
+x: Float!
+y: Float!
+}
+
+type VideoAsset implements Asset {
+id: ID
+mimeType: String!
+source: String!
+thumbnail: String!
+type: AssetType!
+video: VideoMetadata!
+}
+
+type VideoMetadata {
+audioCodec: String
+containerFormat: String
+durationMs: Int!
+fileSize: Int
+frameRate: Int
+height: Int!
+isTranscodingRequired: Boolean!
+isVideoProcessing: Boolean!
+rotationDegree: Int
+thumbnailOffset: Int
+title: String
+videoBitRate: Int
+videoCodec: String
+width: Int!
+}
+
+type VoidMutationError implements MutationError {
+message: String!
+}
+
+type WeeklyPostingLimit {
+limit: Int!
+scheduled: Int!
+sent: Int!
+}
+
+type WhatsAppMetadata {
+businessPortfolioId: String!
+lastSubscribedAt: DateTime
+phoneNumberId: String!
+wabaId: String!
+}
+
+type YoutubeCategory {
+categoryId: String!
+title: String!
+}
+
+type YoutubeMetadata {
+defaultToReminders: Boolean!
+}
+
+type YoutubePostMetadata implements CommonPostMetadata {
+annotations: [Annotation!]!
+category: YoutubeCategory
+embeddable: Boolean!
+isAiGenerated: Boolean!
+license: YoutubeLicense
+madeForKids: Boolean!
+notifySubscribers: Boolean!
+privacy: YoutubePrivacy
+title: String
+type: PostType!
+}
+
+input AddPostToContentItemInput {
+id: ContentItemId!
+postId: PostId!
+}
+
+input AggregatedPostMetricsInput {
+channelIds: [ChannelId!]
+endDateTime: DateTime!
+organizationId: OrganizationId!
+startDateTime: DateTime!
+tags: TagComparator
+}
+
+input AnnotationInputFacebook {
+content: String!
+indices: [Int!]!
+text: String!
+url: String!
+}
+
+input AnnotationInputLinkedIn {
+id: String!
+entity: String!
+length: Int!
+link: String!
+localizedName: String!
+start: Int!
+vanityName: String!
+}
+
+input AssetInput {
+document: DocumentAssetInput
+image: ImageAssetInput
+link: LinkAssetInput
+video: VideoAssetInput
+}
+
+input BlueskyPostMetadataInput {
+linkAttachment: LinkAttachmentInput
+thread: [ThreadedPostInput!]
+}
+
+input ChannelInput {
+id: ChannelId!
+}
+
+input ChannelsFiltersInput {
+isLocked: Boolean
+product: Product
+}
+
+input ChannelsInput {
+filter: ChannelsFiltersInput
+organizationId: OrganizationId!
+}
+
+input ConfigurationInput {
+organizationId: OrganizationId!
+}
+
+input ContentItemInput {
+id: ContentItemId!
+}
+
+input ContentItemsFilter {
+contentStatus: ContentItemStatus
+tags: TagComparator
+targetDate: ContentItemsTargetDateFilter
+}
+
+input ContentItemsInput {
+filter: ContentItemsFilter
+organizationId: OrganizationId!
+sort: [ContentItemsSortInput!]
+}
+
+input ContentItemsSortInput {
+direction: SortDirection!
+field: ContentItemSortableKey!
+}
+
+input ContentItemsTargetDateFilter {
+presence: DateTimePresence
+range: DateTimeComparator
+}
+
+input CreateContentItemDraftInput {
+correlationId: Uuid
+draft: DraftContentInput!
+organizationId: OrganizationId!
+tagIds: [TagId!]
+targetDate: DateTime
+title: String
+}
+
+input CreateContentItemInput {
+organizationId: OrganizationId!
+posts: [CreatePostInput!]!
+tagIds: [TagId!]
+targetDate: DateTime
+title: String
+}
+
+input CreateIdeaInput {
+content: IdeaContentInput!
+cta: String
+group: IdeaGroupInput
+organizationId: ID!
+templateId: String
+}
+
+input CreatePostInput {
+aiAssisted: Boolean
+assets: [AssetInput!]! = []
+channelId: ChannelId!
+draftId: DraftId
+dueAt: DateTime
+ideaId: IdeaId
+metadata: PostInputMetaData
+mode: ShareMode!
+needsApproval: Boolean! = false
+saveToDraft: Boolean
+schedulingType: SchedulingType!
+source: String
+tagIds: [TagId!]
+text: String
+}
+
+input CreatePostTemplateInput {
+body: String!
+description: String
+emoji: String
+organizationId: OrganizationId!
+title: String!
+visibility: PostTemplateVisibility
+}
+
+input CreateSnippetInput {
+name: String!
+organizationId: OrganizationId!
+text: String!
+}
+
+input CreateTagInput {
+organizationId: OrganizationId!
+tag: TagToCreateInput!
+}
+
+input DailyPostingLimitsInput {
+channelIds: [ChannelId!]!
+date: DateTime
+}
+
+input DateTimeComparator {
+end: DateTime
+start: DateTime
+}
+
+input DeleteContentItemInput {
+id: ContentItemId!
+}
+
+input DeletePostInput {
+id: PostId!
+}
+
+input DeletePostTemplateInput {
+id: PostTemplateId!
+}
+
+input DeleteSnippetInput {
+id: SnippetId!
+organizationId: OrganizationId!
+}
+
+input DeleteTagInput {
+id: TagId!
+}
+
+input DocumentAssetInput {
+thumbnailUrl: String!
+title: String!
+url: String!
+}
+
+input DraftContentInput {
+aiAssisted: Boolean! = false
+assets: [AssetInput!]! = []
+text: String!
+}
+
+input EditPostInput {
+id: PostId!
+aiAssisted: Boolean
+approvalChange: PostApprovalChange
+assets: [AssetInput!]
+draftId: DraftId
+dueAt: DateTime
+ideaId: IdeaId
+metadata: PostInputMetaData
+mode: ShareMode
+saveToDraft: Boolean
+schedulingType: SchedulingType
+source: String
+tagIds: [TagId!]
+text: String
+}
+
+input FacebookPostMetadataInput {
+annotations: [AnnotationInputFacebook!]
+firstComment: String
+linkAttachment: LinkAttachmentInput
+type: PostTypeFacebook!
+}
+
+input GoogleBusinessEventMetaDataInput {
+button: GoogleBusinessPostActionType
+endDate: DateTime
+isFullDayEvent: Boolean!
+link: String
+startDate: DateTime
+title: String
+}
+
+input GoogleBusinessOfferMetaDataInput {
+code: String
+endDate: DateTime
+link: String
+startDate: DateTime
+terms: String
+title: String
+}
+
+input GoogleBusinessPostMetadataInput {
+detailsEvent: GoogleBusinessEventMetaDataInput
+detailsOffer: GoogleBusinessOfferMetaDataInput
+detailsWhatsNew: GoogleBusinessWhatsNewMetaDataInput
+title: String
+type: PostTypeGoogleBusiness!
+}
+
+input GoogleBusinessWhatsNewMetaDataInput {
+button: GoogleBusinessPostActionType
+link: String
+}
+
+input IdeaContentInput {
+aiAssisted: Boolean
+date: DateTime
+media: [IdeaMediaInput!]
+services: [Service!]
+tags: [TagInput!]
+text: String
+title: String
+}
+
+input IdeaGroupInput {
+groupId: ID
+placeAfterId: ID
+}
+
+input IdeaGroupsInput {
+organizationId: ID!
+}
+
+input IdeaMediaInput {
+url: String!
+alt: String
+thumbnailUrl: String
+type: MediaType!
+size: Int
+source: IdeaMediaSourceInput
+}
+
+input IdeaMediaSourceInput {
+name: String!
+id: String
+trigger: String
+author: String
+authorUrl: String
+}
+
+input IdeasGroupFilter {
+groups: [ID!]
+membership: IdeaGroupMembership
+}
+
+input IdeasInput {
+groupFilter: IdeasGroupFilter
+organizationId: OrganizationId!
+tagsFilter: TagComparator
+}
+
+input ImageAssetInput {
+metadata: ImageMetadataInput
+thumbnailUrl: String
+url: String!
+}
+
+input ImageDimensionsInput {
+height: Int!
+width: Int!
+}
+
+input ImageMetadataInput {
+altText: String!
+animatedThumbnail: String
+dimensions: ImageDimensionsInput
+userTags: [UserTagInput!]
+}
+
+input InstagramAudioCatalogInput {
+channelId: ChannelId!
+}
+
+input InstagramAudioInput {
+audioId: String!
+channelId: ChannelId!
+}
+
+input InstagramGeolocationInput {
+id: String
+text: String
+}
+
+input InstagramPostMetadataInput {
+firstComment: String
+geolocation: InstagramGeolocationInput
+isAiGenerated: Boolean
+link: String
+shouldShareToFeed: Boolean!
+stickerFields: InstagramStickerFieldsInput
+type: PostType!
+}
+
+input InstagramStickerFieldsInput {
+music: String
+other: String
+products: String
+text: String
+topics: String
+}
+
+input LinkAssetInput {
+description: String
+thumbnailUrl: String
+title: String
+url: String!
+}
+
+input LinkAttachmentInput {
+description: String
+thumbnail: LinkAttachmentThumbnailInput
+title: String
+url: String!
+}
+
+input LinkAttachmentThumbnailInput {
+url: String!
+}
+
+input LinkedInPostMetadataInput {
+annotations: [AnnotationInputLinkedIn!]
+firstComment: String
+linkAttachment: LinkAttachmentInput
+}
+
+input MastodonPostMetadataInput {
+spoilerText: String
+thread: [ThreadedPostInput!]
+}
+
+input MovePostInQueueInput {
+id: PostId!
+position: QueuePosition!
+}
+
+input OrganizationFilterInput {
+organizationId: String!
+}
+
+input PinterestPostMetadataInput {
+boardServiceId: String
+title: String
+url: String
+}
+
+input PostInput {
+id: PostId!
+}
+
+input PostInputMetaData {
+bluesky: BlueskyPostMetadataInput
+facebook: FacebookPostMetadataInput
+google: GoogleBusinessPostMetadataInput
+instagram: InstagramPostMetadataInput
+linkedin: LinkedInPostMetadataInput
+mastodon: MastodonPostMetadataInput
+pinterest: PinterestPostMetadataInput
+substack: SubstackPostMetadataInput
+threads: ThreadsPostMetadataInput
+tiktok: TikTokPostMetadataInput
+twitter: TwitterPostMetadataInput
+youtube: YoutubePostMetadataInput
+}
+
+input PostsFiltersInput {
+channelIds: [ChannelId!]
+dueAt: DateTimeComparator
+dueAtPresence: DateTimePresence
+endDate: DateTime
+postTypes: [PostType!]
+startDate: DateTime
+status: [PostStatus!]
+tagIds: [TagId!]
+tags: TagComparator
+createdAt: DateTimeComparator
+}
+
+input PostsInput {
+filter: PostsFiltersInput
+organizationId: OrganizationId!
+sort: [PostSortInput!]
+}
+
+input PostSortInput {
+direction: SortDirection!
+field: PostSortableKey!
+}
+
+input PostTemplateInput {
+id: PostTemplateId!
+}
+
+input PostTemplatesFilterInput {
+visibility: PostTemplateVisibility
+}
+
+input PostTemplatesInput {
+filter: PostTemplatesFilterInput
+organizationId: OrganizationId!
+}
+
+input PromoteContentItemDraftToPostsInput {
+id: ContentItemId!
+posts: [CreatePostInput!]!
+tagIds: [TagId!]
+}
+
+input RemovePostFromContentItemInput {
+id: ContentItemId!
+postId: PostId!
+}
+
+input RetweetMetadataInput {
+id: String!
+comment: String
+}
+
+input SearchInstagramAudioCatalogInput {
+channelId: ChannelId!
+query: String!
+}
+
+input SearchInstagramAudioInput {
+audioType: InstagramAudioType!
+channelId: ChannelId!
+query: String!
+}
+
+input SnippetsInput {
+organizationId: OrganizationId!
+}
+
+input SubstackPostMetadataInput {
+linkAttachment: LinkAttachmentInput
+}
+
+input TagByIdInput {
+id: TagId!
+}
+
+input TagComparator {
+in: [TagId!]!
+isEmpty: Boolean! = false
+}
+
+input TagInput {
+id: ID!
+name: String!
+color: String!
+}
+
+input TagsFiltersInput {
+isLocked: Boolean
+}
+
+input TagsInput {
+filter: TagsFiltersInput
+organizationId: OrganizationId!
+}
+
+input TagToCreateInput {
+color: String!
+name: String!
+}
+
+input TagToUpdateInput {
+color: String!
+name: String!
+}
+
+input ThreadedPostInput {
+assets: [AssetInput!]! = []
+metadata: ThreadItemMetadataInput
+text: String
+}
+
+input ThreadItemBlueskyMetadataInput {
+linkAttachment: LinkAttachmentInput
+}
+
+input ThreadItemMetadataInput {
+bluesky: ThreadItemBlueskyMetadataInput
+threads: ThreadItemThreadsMetadataInput
+}
+
+input ThreadItemThreadsMetadataInput {
+linkAttachment: LinkAttachmentInput
+}
+
+input ThreadsPostMetadataInput {
+linkAttachment: LinkAttachmentInput
+locationId: String
+locationName: String
+thread: [ThreadedPostInput!]
+topic: String
+type: PostType
+}
+
+input TikTokPostMetadataInput {
+isAiGenerated: Boolean
+title: String
+}
+
+input TrendingInstagramAudioInput {
+audioType: InstagramAudioType!
+channelId: ChannelId!
+}
+
+input TwitterPostMetadataInput {
+isAiGenerated: Boolean
+retweet: RetweetMetadataInput
+thread: [ThreadedPostInput!]
+}
+
+input UpdateContentItemDraftInput {
+id: ContentItemId!
+draft: DraftContentInput!
+tagIds: [TagId!]
+targetDate: DateTime
+}
+
+input UpdateContentItemInput {
+id: ContentItemId!
+targetDate: DateTime
+title: String
+}
+
+input UpdatePostTemplateInput {
+id: PostTemplateId!
+body: String
+description: String
+emoji: String
+title: String
+visibility: PostTemplateVisibility
+}
+
+input UpdateSnippetInput {
+id: SnippetId!
+name: String!
+organizationId: OrganizationId!
+text: String!
+}
+
+input UpdateTagInput {
+id: TagId!
+tag: TagToUpdateInput!
+}
+
+input UserTagInput {
+handle: String!
+x: Float!
+y: Float!
+}
+
+input VideoAssetInput {
+metadata: VideoMetadataInput
+thumbnailUrl: String
+url: String!
+}
+
+input VideoMetadataInput {
+thumbnailOffset: Int
+title: String
+}
+
+input YoutubePostMetadataInput {
+categoryId: String
+embeddable: Boolean
+isAiGenerated: Boolean
+license: YoutubeLicense
+madeForKids: Boolean
+notifySubscribers: Boolean
+privacy: YoutubePrivacy
+title: String
+}
+
+interface Asset {
+id: ID
+mimeType: String!
+source: String!
+thumbnail: String!
+type: AssetType!
+}
+
+interface CommonPostMetadata {
+annotations: [Annotation!]!
+type: PostType!
+}
+
+interface MutationError {
+message: String!
+}
+
+interface MutationSuccess {
+_empty: String!
+}
+
+interface ScrapedLink {
+text: String!
+thumbnails: [String!]!
+url: String!
+}
+
+interface ThreadedPostMetadata {
+thread: [ThreadedPost!]!
+threadCount: Int!
+}
+
+interface ValidationRule {
+property: ContentProperty!
+}
+
+union AddPostToContentItemPayload = AddPostToContentItemSuccess | VoidMutationError
+
+union ChannelMetadata = InstagramMetadata | TiktokMetadata | YoutubeMetadata | PinterestMetadata | MastodonMetadata | BlueskyMetadata | GoogleBusinessMetadata | FacebookMetadata | TwitterMetadata | LinkedInMetadata | WhatsAppMetadata
+
+union ContentItemBody = DraftContent | PostContent
+
+union CreateContentItemDraftPayload = CreateContentItemDraftSuccess | CreateContentItemDraftFailure
+
+union CreateContentItemError = InvalidInputError | NotFoundError | LimitReachedError | CreateContentItemVariantInvalidInputError | CreateContentItemVariantLimitReachedError | CreateContentItemVariantNotFoundError
+
+union CreateContentItemPayload = CreateContentItemSuccess | CreateContentItemFailure
+
+union CreateIdeaPayload = Idea | IdeaResponse | InvalidInputError | UnauthorizedError | UnexpectedError | LimitReachedError
+
+union CreatePostTemplatePayload = CreatePostTemplateSuccess | VoidMutationError
+
+union CreateSnippetPayload = CreateSnippetSuccess | VoidMutationError
+
+union CreateTagPayload = TagActionSuccess | InvalidInputError | DuplicateError | LimitReachedError | NotFoundError | UnauthorizedError | UnexpectedError | RestProxyError
+
+union DeleteContentItemPayload = EmptySuccess | DeleteContentItemFailure
+
+union DeletePostPayload = DeletePostSuccess | VoidMutationError
+
+union DeletePostTemplatePayload = EmptySuccess | VoidMutationError
+
+union DeleteSnippetPayload = DeleteSnippetSuccess | VoidMutationError
+
+union DeleteTagPayload = DeleteTagActionSuccess | InvalidInputError | NotFoundError | UnauthorizedError | UnexpectedError | RestProxyError
+
+union EngagementMetadata = GoogleBusinessEngagementMetadata
+
+union GoogleBusinessPostDetails = GoogleBusinessWhatsNewMetaData | GoogleBusinessOfferMetaData | GoogleBusinessEventMetaData
+
+union InstagramAudioCatalogPayload = InstagramAudioCatalogSuccess | ChannelRefreshRequired
+
+union InstagramAudioPayload = InstagramAudioSuccess | ChannelRefreshRequired
+
+union MovePostInQueuePayload = PostActionSuccess | VoidMutationError
+
+union PostActionPayload = PostActionSuccess | NotFoundError | UnauthorizedError | UnexpectedError | RestProxyError | LimitReachedError | InvalidInputError
+
+union PostMetadata = InstagramPostMetadata | FacebookPostMetadata | LinkedInPostMetadata | TwitterPostMetadata | PinterestPostMetadata | GoogleBusinessPostMetadata | YoutubePostMetadata | MastodonPostMetadata | TiktokPostMetadata | ThreadsPostMetadata | BlueskyPostMetadata | SubstackPostMetadata
+
+union PromoteContentItemDraftToPostsError = ContentItemStateError | InvalidInputError | PostChannelNotFoundError | PostInvalidInputError | PostLimitReachedError
+
+union PromoteContentItemDraftToPostsPayload = PromoteContentItemDraftToPostsSuccess | PromoteContentItemDraftToPostsFailure
+
+union ReactionVisual = IconVisual | ImageVisual
+
+union RemovePostFromContentItemPayload = RemovePostFromContentItemSuccess | VoidMutationError
+
+union SearchInstagramAudioPayload = SearchInstagramAudioSuccess | ChannelRefreshRequired
+
+union UpdateContentItemDraftError = InvalidInputError | ContentItemStateError
+
+union UpdateContentItemDraftPayload = UpdateContentItemDraftSuccess | UpdateContentItemDraftFailure
+
+union UpdateContentItemPayload = UpdateContentItemSuccess | UpdateContentItemFailure
+
+union UpdatePostTemplatePayload = UpdatePostTemplateSuccess | VoidMutationError
+
+union UpdateSnippetPayload = UpdateSnippetSuccess | VoidMutationError
+
+union UpdateTagPayload = TagActionSuccess | InvalidInputError | DuplicateError | NotFoundError | UnauthorizedError | UnexpectedError | RestProxyError
+
+enum AiFeature { insights suggestions }
+
+enum AnnotationType { annotation bold bulletedListItem cashtag hashtag heading italic mention orderedListItem strikethrough url }
+
+enum AssetType { document image video }
+
+enum AuthorizationStatus { needsRefresh needsUpgrade notEnoughData notEnoughRights ok }
+
+enum ChannelAction { backfillChannel exportInsights manageCapabilities manageChannelSettings manageComments manageDms manageIntegrations managePostingSchedule manageUpdates publishStartPage readUpdates reconnectChannel removeChannel scheduleUpdates viewCapabilities viewChannel viewComments viewDms viewInsights viewPublish viewUpdates }
+
+enum ChannelType { account business channel group page profile }
+
+enum ConfigurationContentType { comment post reel story }
+
+enum ConnectedAppCategory { mcp }
+
+enum ContentItemAction { deleteContentItem updateContentItem }
+
+enum ContentItemSortableKey { targetDate createdAt }
+
+enum ContentItemStatus { draftContent postContent }
+
+enum ContentProperty { board document firstComment gif image imageAltText linkAttachment retweetAttachment text thread video }
+
+enum DateTimePresence { absent present }
+
+enum DayOfWeek { fri mon sat sun thu tue wed }
+
+enum EngagementType { comment mention }
+
+enum Feature { comment directMessage engagementReaction insights mention posting }
+
+enum GoogleBusinessPostActionType { book call learn_more none order shop signup }
+
+enum IdeaGroupMembership { grouped ungrouped }
+
+enum InstagramAudioType { music originalSound }
+
+enum MediaFormat { gif jpeg mov mp4 pdf png webm }
+
+enum MediaType { image gif video link document unsupported }
+
+enum NoteAction { deleteNote reactToNote updateNote }
+
+enum NoteType { aiGenerated bufferGenerated userGenerated }
+
+enum NotificationStatus { markedAsPublished notified }
+
+enum PostAction { addPostNote addPostToQueue approvePost cancelPostRecurrence copyPostLink createPostRecurrence deletePost duplicatePost editPostRecurrence movePostToDraft publishPostNext publishPostNow rejectPost removePostScheduledTime requestPostApproval revertPostApprovalRequest sharePostLink updatePost updatePostSchedule updatePostTags updateShopGridLink viewPost }
+
+enum PostApprovalChange { request revert }
+
+enum PostingGoalStatus { AtRisk Hit OnTrack }
+
+enum PostMetricType { averageTimeWatched clicks comments engagementRate favorites follows freeSubscriptions impressions likes link_clicks other paidSubscriptions postCount quotes reach reactions reblogs repins replies reposts retweets saves shares totalTimeWatched viewers views }
+
+enum PostMetricUnit { count percentage }
+
+enum PostSortableKey { dueAt createdAt }
+
+enum PostStatus { draft error needs_approval scheduled sending sent }
+
+enum PostTemplateVisibility { internal private public }
+
+enum PostType { carousel event ghost_post offer post reel short story thread whats_new }
+
+enum PostTypeFacebook { post reel story }
+
+enum PostTypeGoogleBusiness { event offer whats_new }
+
+enum PostVia { api buffer network }
+
+enum Product { analyze buffer comments engage publish startPage }
+
+enum QueuePosition { bottom top }
+
+enum ReactionIcon { heart star thumbsUp }
+
+enum ReactionType { celebrate external funny insightful like love support }
+
+enum ScheduleOption { Queue Prioritize FixedTime Now }
+
+enum SchedulingType { automatic notification }
+
+enum Service { bluesky facebook googlebusiness instagram linkedin mastodon pinterest startPage substack threads tiktok twitter whatsapp youtube }
+
+enum ShareMode { addToQueue customScheduled shareNext shareNow }
+
+enum SortDirection { asc desc }
+
+enum SyncDataMechanism { polling realTime }
+
+enum TagColorName { blue blueLight gray grayLight green greenLight orange orangeLight pink pinkLight purple purpleLight red redLight teal tealLight yellow yellowLight }
+
+enum YoutubeLicense { creativeCommon youtube }
+
+enum YoutubePrivacy { private public unlisted }
+
+scalar AccountId
+
+scalar ChannelId
+
+scalar ContentItemId
+
+scalar DateTime
+
+scalar DraftContentId
+
+scalar DraftId
+
+scalar Email
+
+scalar IdeaId
+
+scalar InvitationId
+
+scalar NoteId
+
+scalar OrganizationId
+
+scalar PostId
+
+scalar PostTemplateId
+
+scalar SnippetId
+
+scalar TagId
+
+scalar URL
+
+scalar Uuid
