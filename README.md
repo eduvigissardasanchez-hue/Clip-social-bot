@@ -20,9 +20,9 @@ Mantén `DRY_RUN=true` hasta completar las pruebas iniciales. Consulta
 5. Opcionalmente verifica la instalación:
    `.venv\Scripts\python.exe -m pytest -q`.
 
-Si Windows bloquea Python o PowerShell por una política corporativa, solicita
-permiso al administrador para esos ejecutables/scripts. El proyecto no cambia
-Device Guard ni intenta saltarse las políticas de ejecución.
+Si Windows bloquea Python o el Programador de tareas por una política corporativa,
+solicita permiso al administrador para esas herramientas. El proyecto no cambia
+Device Guard ni la política de ejecución de PowerShell.
 
 ## 2. Configurar Buffer
 
@@ -235,9 +235,11 @@ con distinta longitud/fechas exige revisión en Buffer antes de seguir.
 
 ## 7. Mantenimiento automático en Windows
 
-Ejecuta `INSTALAR_TAREA_WINDOWS.bat` desde la carpeta definitiva. Registra la
+Ejecuta `INSTALAR_TAREA_WINDOWS.bat` desde la carpeta definitiva. El instalador
+usa Python y `schtasks.exe` con una definición XML; no ejecuta scripts PowerShell
+ni cambia su política de ejecución. Registra y verifica la
 tarea `ClipsSocialBotBuffer` para ejecutarse diariamente a las **03:15**, antes
-del primer turno, y al iniciar sesión. Activa `StartWhenAvailable` para recuperar
+del primer turno, y un minuto después de iniciar sesión. Activa `StartWhenAvailable` para recuperar
 una ejecución perdida. La tarea usa `.venv\Scripts\pythonw.exe`, sin ventana
 permanente, y conserva los resultados en `logs\bot.log`.
 
@@ -258,10 +260,10 @@ vídeo y sus sidecars a `publicados`. Si alguna está en error, se conserva el
 medio remoto. La limpieza se puede reanudar sin recrear posts. Una colisión en
 `publicados` detiene el archivado para evitar sobrescrituras.
 
-Para desinstalar la tarea, ejecuta en PowerShell bajo el mismo usuario:
+Para desinstalar la tarea, ejecuta en el Símbolo del sistema bajo el mismo usuario:
 
-```powershell
-Unregister-ScheduledTask -TaskName 'ClipsSocialBotBuffer' -Confirm:$false
+```bat
+schtasks /Delete /TN "ClipsSocialBotBuffer" /F
 ```
 
 También puedes eliminarla desde el Programador de tareas de Windows. Esto no

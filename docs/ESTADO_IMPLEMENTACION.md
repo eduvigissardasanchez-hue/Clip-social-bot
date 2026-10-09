@@ -18,8 +18,9 @@
    intención persistida antes de mutar, recuperación de resultados inciertos.
 6. Reconciliación de IDs y estados, reposición, retries limitados/backoff,
    conservación de medios ante errores y limpieza/archivado tras tres sent.
-7. Instalador Windows mediante PowerShell ScheduledTasks: diario + inicio de
+7. Instalador Windows mediante Python y schtasks/XML: diario + inicio de
    sesión, StartWhenAvailable, pythonw, sin consola ni contraseñas guardadas.
+   Verifica la tarea registrada y no cambia la política de PowerShell.
 
 ## Evidencia y límites
 
