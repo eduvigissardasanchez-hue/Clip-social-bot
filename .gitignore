@@ -11,3 +11,4 @@ errores/*
 *credentials*
 *tokens*
 data/*.lock
+!pendientes/_default.json

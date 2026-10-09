@@ -314,3 +314,22 @@ def test_r2_cap_warning_preserves_local_queue(tmp_path):
     db.close()
     assert any('AVISO:' in message for message in messages)
     assert (tmp_path/'pendientes'/'000_clip.mp4').exists()
+
+
+def test_shared_caption_scheduled_for_each_network_and_never_archived(tmp_path):
+    import json
+    w,b,s,_=fixtures(tmp_path)
+    shared=tmp_path/'pendientes'/'_default.json'
+    shared.write_text(json.dumps({'caption':'Mi descripción común','ai_generated':False}))
+    w.run()
+    assert all(call.args[0]['text']=='Mi descripción común' for call in b.create_post.call_args_list)
+    youtube=next(call.args[0] for call in b.create_post.call_args_list if call.args[0]['channelId']=='youtube')
+    assert youtube['metadata']['youtube']['title']=='clip'
+    db=Database(tmp_path/'data'/'bot.db');clip=db.clips()[0]
+    remote=[dict(id=p['post_id'],channelId=p['platform'],status='sent',dueAt=DATE,schedulingType='automatic')
+            for p in db.posts(clip['sha256'])]
+    db.close()
+    b.posts.return_value=[];b.posts_by_ids.return_value=remote
+    w.run()
+    assert shared.exists()
+    assert not (tmp_path/'publicados'/'_default.json').exists()

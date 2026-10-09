@@ -128,10 +128,12 @@ Fuentes consultadas el 9 de octubre de 2026:
 ### Actualizar una descarga anterior
 
 Descarga el ZIP actual de GitHub y copia los archivos de programa sobre tu carpeta
-actual. **Conserva `.env`, `data/`, `pendientes/`, `publicados/`, `errores/` y logs**;
+actual. **Conserva `.env`, `data/`, tus vídeos/sidecars en `pendientes/`, `publicados/`, `errores/` y logs**;
 no borres bases de datos ni sustituyas tu `.env` por la plantilla. Ejecuta
 `CONFIGURAR.bat` otra vez: respetará el `.env` existente. Los límites anteriores
 se aplican automáticamente aunque tu `.env` aún no tenga sus tres variables.
+Copia también `pendientes/_default.json` si quieres la descripción compartida y
+no tienes ya una versión personalizada; no sobrescribas tu descripción sin revisarla.
 
 ## 4. Preparar clips y descripciones
 
@@ -163,8 +165,16 @@ Para `clip.mp4` se prefiere `clip.json`:
 }
 ```
 
-Si no hay JSON, se lee `clip.txt` como caption general. Sin sidecar se usa el
-nombre quitando prefijos numéricos y guiones bajos. El título de YouTube sale de
+Si no hay JSON, se lee `clip.txt` como caption general. Si tampoco hay TXT,
+se usa **`pendientes/_default.json`**, compartido por todos los clips que no tengan
+sidecar propio. Incluye tu descripción general y omite `youtube_title` para que
+cada clip conserve un título generado de su nombre. El archivo distribuido contiene
+la descripción de redes de Honnoe y se puede editar localmente. No hace falta
+copiarlo ni renombrarlo para cada vídeo. No se mueve a `publicados` al limpiar clips.
+
+La prioridad es: `clip.json` → `clip.txt` → `_default.json` → nombre del archivo.
+Un JSON o TXT específico sustituye por completo la descripción compartida.
+Sin ninguna descripción se usa el nombre quitando prefijos numéricos y guiones bajos. El título de YouTube sale de
 `youtube_title` o del nombre del clip; el TXT general no sustituye ese título.
 No se usa IA externa ni se añade `#shorts` automáticamente.
 

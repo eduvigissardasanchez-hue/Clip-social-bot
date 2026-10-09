@@ -78,3 +78,33 @@ def test_dry_run_no_changes(tmp_path):
     assert len(inspect_local(tmp_path, dry_run=True)) == 1
     after = {p.relative_to(tmp_path): p.read_bytes() for p in tmp_path.rglob('*') if p.is_file()}
     assert before == after
+
+
+def test_shared_description_keeps_each_filename_title(tmp_path):
+    import json
+    text='🔥 Sígueme\n\n💜 Twitch: @honnoe'
+    (tmp_path/'_default.json').write_text(json.dumps({'caption':text,'ai_generated':False},ensure_ascii=False),encoding='utf-8')
+    first=read_captions(tmp_path/'001_mi_clip.mp4')
+    second=read_captions(tmp_path/'002_otro_clip.mp4')
+    assert first.youtube_title=='mi clip'
+    assert second.youtube_title=='otro clip'
+    for captions in (first,second):
+        assert captions.youtube_description==captions.instagram_caption==captions.tiktok_caption==text
+
+
+def test_specific_sidecars_override_shared_description(tmp_path):
+    import json
+    video=tmp_path/'clip.mp4'
+    (tmp_path/'_default.json').write_text(json.dumps({'caption':'Común'}))
+    video.with_suffix('.txt').write_text('Específico TXT')
+    assert read_captions(video).caption=='Específico TXT'
+    video.with_suffix('.json').write_text(json.dumps({'caption':'Específico JSON','youtube_title':'Título propio'}))
+    captions=read_captions(video)
+    assert captions.caption=='Específico JSON'
+    assert captions.youtube_title=='Título propio'
+
+
+def test_invalid_shared_json_stops_caption_processing(tmp_path):
+    (tmp_path/'_default.json').write_text('{"caption":123}')
+    with pytest.raises(ValueError,match='caption'):
+        read_captions(tmp_path/'clip.mp4')

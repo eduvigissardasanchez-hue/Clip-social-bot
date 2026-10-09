@@ -3,7 +3,8 @@
 ## Implementado
 
 1. Estructura, .env.example, configuración, SQLite y migraciones aditivas,
-   scanner SHA-256, orden alfabético, captions JSON/TXT/fallback y estados.
+   scanner SHA-256, orden alfabético, captions JSON/TXT/compartido/fallback y estados.
+   `pendientes/_default.json` aporta una descripción común sin repetir sidecars.
 2. Cliente Buffer GraphQL y diagnóstico de cuenta, organizaciones, canales,
    selección explícita ante ambigüedad, calendarios y autopublicación.
 3. Abstracción StorageProvider, R2/S3 con boto3, URL HTTPS estable, acceso público,
