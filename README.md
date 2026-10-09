@@ -168,7 +168,12 @@ Para `clip.mp4` se prefiere `clip.json`:
 Si no hay JSON, se lee `clip.txt` como caption general. Si tampoco hay TXT,
 se usa **`pendientes/_default.json`**, compartido por todos los clips que no tengan
 sidecar propio. Incluye tu descripción general y omite `youtube_title` para que
-cada clip conserve un título generado de su nombre. El archivo distribuido contiene
+cada clip conserve un título generado de su nombre. El ajuste local
+`title_from_filename: true` usa el nombre exacto del MP4 sin extensión como título
+YouTube (conserva prefijos y guiones bajos), y lo añade como primera línea de los
+captions Instagram/TikTok: Buffer no expone un título de vídeo separado en esas
+dos plataformas. La descripción común de YouTube permanece sin esa primera línea.
+Esta opción es del bot, no un campo que se envíe a Buffer. El archivo distribuido contiene
 la descripción de redes de Honnoe y se puede editar localmente. No hace falta
 copiarlo ni renombrarlo para cada vídeo. No se mueve a `publicados` al limpiar clips.
 

@@ -108,3 +108,19 @@ def test_invalid_shared_json_stops_caption_processing(tmp_path):
     (tmp_path/'_default.json').write_text('{"caption":123}')
     with pytest.raises(ValueError,match='caption'):
         read_captions(tmp_path/'clip.mp4')
+
+
+def test_filename_title_exact_and_visible_on_all_platforms(tmp_path):
+    import json
+    (tmp_path/'_default.json').write_text(json.dumps({'caption':'🔥 Redes\n💜 Twitch',
+                         'title_from_filename':True,'youtube_title':'Título que se ignora'},ensure_ascii=False),encoding='utf-8')
+    captions=read_captions(tmp_path/'001_Mi_Clip.mp4')
+    assert captions.youtube_title=='001_Mi_Clip'
+    assert captions.youtube_description=='🔥 Redes\n💜 Twitch'
+    assert captions.instagram_caption==captions.tiktok_caption=='001_Mi_Clip\n\n🔥 Redes\n💜 Twitch'
+
+
+def test_filename_title_flag_must_be_boolean(tmp_path):
+    (tmp_path/'_default.json').write_text('{"caption":"Texto","title_from_filename":"true"}')
+    with pytest.raises(ValueError,match='title_from_filename'):
+        read_captions(tmp_path/'clip.mp4')
