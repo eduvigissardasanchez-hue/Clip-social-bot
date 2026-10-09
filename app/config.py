@@ -22,6 +22,9 @@ class Config:
     organization_id: str = ""
     channel_ids: dict = field(default_factory=dict)
     max_attempts: int = 5
+    r2_max_storage_bytes: int = 8_000_000_000
+    r2_max_class_a_operations: int = 100_000
+    r2_max_class_b_operations: int = 1_000_000
 
     @classmethod
     def load(cls, root=ROOT):
@@ -36,13 +39,19 @@ class Config:
             raise ValueError("MAX_ATTEMPTS debe estar entre 1 y 20")
         if not 1 <= capacity <= 10 or offset < 0:
             raise ValueError("Capacidad inválida (1..10) o thumbnailOffset negativo")
+        limits = tuple(int(os.getenv(name, str(default))) for name, default in (
+            ("R2_MAX_STORAGE_BYTES", 8_000_000_000),
+            ("R2_MAX_CLASS_A_OPERATIONS", 100_000),
+            ("R2_MAX_CLASS_B_OPERATIONS", 1_000_000)))
+        if any(value <= 0 or value > ceiling for value, ceiling in zip(limits, (8_000_000_000,100_000,1_000_000))):
+            raise ValueError("Los limites preventivos R2 deben ser positivos y no superar 8 GB / 100000 A / 1000000 B")
         return cls(root, flag == "true", capacity, offset,
                    os.getenv("BUFFER_API_KEY", ""), os.getenv("R2_ACCOUNT_ID", ""),
                    os.getenv("R2_ACCESS_KEY_ID", ""), os.getenv("R2_SECRET_ACCESS_KEY", ""),
                    os.getenv("R2_BUCKET", ""), os.getenv("R2_PUBLIC_BASE_URL", "").rstrip("/"),
                    os.getenv("BUFFER_ORGANIZATION_ID", ""),
                    {p: os.getenv(f"BUFFER_{p.upper()}_CHANNEL_ID", "") for p in ("youtube", "instagram", "tiktok")},
-                   int(os.getenv("MAX_ATTEMPTS", "5")))
+                   int(os.getenv("MAX_ATTEMPTS", "5")), *limits)
 
     def validate_storage(self):
         names = ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "R2_PUBLIC_BASE_URL")

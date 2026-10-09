@@ -9,6 +9,7 @@ from app.database import Database
 from app.captions import read_captions
 from app.models import PLATFORMS, final_state
 from app.buffer_client import BufferClient, BufferError
+from app.r2_budget import R2BudgetExceeded
 from app.channels import discover, check_schedules
 from app.locking import process_lock
 
@@ -28,6 +29,8 @@ def show_status(root, emit=print):
             emit(f'{clip["filename"]:30} ' + ' '.join(f'{posts[p]:11}' for p in PLATFORMS))
             state = final_state([posts[p] for p in PLATFORMS])
             totals[state if state in totals else 'local'] += 1
+            if clip['last_error']:
+                emit(f'  AVISO: {clip["last_error"]}')
             for p in rows:
                 if p['last_error']:
                     emit(f'  {p["platform"]}: {p["last_error"]}')
@@ -117,7 +120,7 @@ def run(argv=None):
             else:
                 workflow.run()
         return 0
-    except (BufferError, ValueError) as error:
+    except (BufferError, ValueError, R2BudgetExceeded) as error:
         emit(f'ERROR: {error}')
         return 1
     except Exception:

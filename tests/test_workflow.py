@@ -298,3 +298,19 @@ def test_remote_file_conserved_when_local_changed(tmp_path):
     Path(clip['path']).write_bytes(b'changed')
     with pytest.raises(ValueError):cleanup_clip(db,clip,s,tmp_path)
     s.delete.assert_not_called();db.close()
+
+
+def test_r2_cap_warning_preserves_local_queue(tmp_path):
+    from app.r2_budget import R2BudgetExceeded
+    w,b,s,_=fixtures(tmp_path)
+    messages=[];w.emit=messages.append
+    s.upload.side_effect=R2BudgetExceeded('Limite preventivo R2 alcanzado')
+    w.run()
+    b.create_post.assert_not_called();s.delete.assert_not_called()
+    db=Database(tmp_path/'data'/'bot.db');clip=db.clips()[0]
+    assert all(not p['post_id'] and p['state']=='local' for p in db.posts(clip['sha256']))
+    assert 'Limite' in clip['last_error']
+    assert clip['preparation_attempts']==0
+    db.close()
+    assert any('AVISO:' in message for message in messages)
+    assert (tmp_path/'pendientes'/'000_clip.mp4').exists()

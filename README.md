@@ -70,6 +70,9 @@ Completa en `.env`:
 | `BUFFER_CHANNEL_CAPACITY` | `10` para Free; rango admitido 1–10 |
 | `THUMBNAIL_OFFSET_MS` | `2000` por defecto, para Instagram y TikTok |
 | `MAX_ATTEMPTS` | `5`, máximo de intentos antes de revisión manual |
+| `R2_MAX_STORAGE_BYTES` | `8000000000`: tope preventivo de 8 GB decimales en este bucket |
+| `R2_MAX_CLASS_A_OPERATIONS` | `100000`: solicitudes del bot en una ventana conservadora de 32 días |
+| `R2_MAX_CLASS_B_OPERATIONS` | `1000000`: solicitudes del bot en esa ventana |
 
 Los MP4 deben seguir accesibles hasta que las tres publicaciones estén `sent`.
 No configures reglas de expiración que borren objetos `clips/` pendientes.
@@ -82,6 +85,53 @@ para comprobar subida/HTTPS/borrado, cambia a `DRY_RUN=false` y vuelve a ejecuta
 La prueba utiliza un pequeño TXT temporal bajo `diagnostics/`, comprueba su
 contenido público y lo elimina incluso tras un resultado de subida incierto.
 No utiliza ni borra tus clips. Después puedes volver a activar dry run.
+
+### Protección del consumo R2 y alcance
+
+La cuota gratuita de Cloudflare Standard incluye 10 GB-mes, 1 millón de operaciones
+A y 10 millones B. El bot **no representa un límite de facturación de la cuenta**.
+Sus protecciones, activas por defecto incluso sin añadir variables al .env antiguo,
+son más conservadoras:
+
+- Antes de cada subida nueva lista **todo el bucket**, con todas sus páginas,
+  suma sus objetos y comprueba que el archivo no superará 8 GB ocupados.
+  Incluye objetos ajenos al bot dentro de ese bucket. Si no puede medirlo o
+  hay subidas multipart incompletas, no sube. No borra objetos desconocidos.
+- Envía los objetos explícitamente como `STANDARD`; evita Infrequent Access,
+  que no tiene cuota gratuita y cobra también recuperación. Bloquea subidas
+  si encuentra objetos de otra clase.
+- Usa subidas PUT únicas (máximo conservador de 5 GB por archivo) y no crea
+  multipart pendientes. Las solicitudes SDK no se reintentan internamente;
+  los fallos temporales se reanudan con el backoff controlado del bot.
+- Cuenta antes de cada solicitud del bot, incluso si termina fallando, y
+  persiste el consumo en `data/r2_usage.db`. Detiene solicitudes A/B al llegar
+  a sus topes preventivos. Cuenta los GET públicos de diagnóstico también.
+  Los borrados son gratuitos según Cloudflare y se permiten al agotar topes.
+- Cuando falta espacio, muestra `AVISO`, registra el motivo en SQLite/logs,
+  conserva el clip local y no crea posts. El mantenimiento volverá a medir
+  después de limpiar los medios de clips publicados; el límite no se amplía.
+  `VER_ESTADO` muestra estos avisos. No borres `data/r2_usage.db`.
+
+**Lo que no puede controlar:** otros buckets/aplicaciones, uso previo a instalar
+esta versión, escrituras externas concurrentes y GET que hagan Buffer u otros
+visitantes de la URL pública. Los contadores son locales, no los de facturación
+de Cloudflare. Mantén un bucket y credenciales dedicados al bot, no compartas el
+acceso público y revisa el consumo total en el panel R2. No garantiza coste cero.
+La cuota de almacenamiento se calcula promediando los picos diarios del periodo:
+permanecer por debajo de 8 GB en un bucket dedicado deja margen, pero borrar
+objetos no elimina consumo ya facturado ni el de otros servicios.
+
+Fuentes consultadas el 9 de octubre de 2026:
+[precios R2](https://developers.cloudflare.com/r2/pricing/) y
+[compatibilidad S3](https://developers.cloudflare.com/r2/api/s3/api/).
+
+### Actualizar una descarga anterior
+
+Descarga el ZIP actual de GitHub y copia los archivos de programa sobre tu carpeta
+actual. **Conserva `.env`, `data/`, `pendientes/`, `publicados/`, `errores/` y logs**;
+no borres bases de datos ni sustituyas tu `.env` por la plantilla. Ejecuta
+`CONFIGURAR.bat` otra vez: respetará el `.env` existente. Los límites anteriores
+se aplican automáticamente aunque tu `.env` aún no tenga sus tres variables.
 
 ## 4. Preparar clips y descripciones
 

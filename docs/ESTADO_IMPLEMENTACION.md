@@ -8,6 +8,10 @@
    selección explícita ante ambigüedad, calendarios y autopublicación.
 3. Abstracción StorageProvider, R2/S3 con boto3, URL HTTPS estable, acceso público,
    subida reutilizable por hash y diagnóstico temporal de subida/GET/borrado.
+   Protección R2: 8 GB por bucket, inventario completo antes de subir, Standard
+   explícito, PUT sin multipart, contadores locales persistentes con ventana de
+   32 días y topes de operaciones; pausa y avisos sin publicar clips que no caben.
+   Estos controles no son un tope de facturación global de Cloudflare.
 4. Prueba de un solo clip nuevo, con vista previa y confirmación PROGRAMAR.
 5. Programación masiva y capacidad Free mínima de los tres canales, cola SQLite,
    intención persistida antes de mutar, recuperación de resultados inciertos.

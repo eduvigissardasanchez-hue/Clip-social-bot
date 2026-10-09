@@ -13,6 +13,7 @@ from .post_inputs import post_input
 from .scanner import scan, file_hash
 from .scheduler import available_capacity
 from .storage import StorageError
+from .r2_budget import R2BudgetExceeded
 import requests
 from botocore.exceptions import ClientError, EndpointConnectionError, ConnectTimeoutError, ReadTimeoutError, ConnectionClosedError
 
@@ -113,7 +114,6 @@ class Workflow:
                 db.register(scan(self.root / 'pendientes'))
                 org, channels = discover(self.buffer, self.config, self.emit)
                 check_schedules(channels)
-                self.storage.diagnose(dry_run=True)
                 remote = self.buffer.posts(org, [c['id'] for c in channels.values()], ['scheduled','sending'])
                 self._reconcile(db, org, channels, remote)
                 if not only_hash:
@@ -126,6 +126,8 @@ class Workflow:
                         except Exception:
                             db.update_clip(c['sha256'], last_error='No se pudo limpiar/archivar; se reintentará sin recrear posts.')
                             self.emit(f'{c["filename"]}: limpieza pendiente; consulta las carpetas y R2.')
+                # Deletions are free; allow already-sent media cleanup before a read-budget check.
+                self.storage.diagnose(dry_run=True)
                 counts = {p: sum(post['channelId']==channels[p]['id'] for post in remote) for p in PLATFORMS}
                 candidates = [dict(c) for c in db.clips() if not c['archived']]
                 partial_ids = []
@@ -161,6 +163,12 @@ class Workflow:
                         break
                     try:
                         self._schedule_clip(db, c, posts, missing, channels, counts, remote)
+                    except R2BudgetExceeded as error:
+                        db.update_clip(c['sha256'], last_error=str(error), preparation_attempts=0,
+                                       next_retry_at=(now()+timedelta(hours=12)).isoformat())
+                        self.emit(f'AVISO: {error}')
+                        self.emit('Los siguientes clips permanecen locales. Revisa el uso real en Cloudflare; no borres los contadores.')
+                        break
                     except BufferError:
                         raise
                     except Exception as error:

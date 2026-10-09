@@ -11,6 +11,8 @@ def storage():
     config = Config(r2_account_id='account', r2_access_key_id='key', r2_secret_access_key='secret',
                     r2_bucket='bucket', r2_public_base_url='https://media.example.org')
     client = Mock()
+    client.list_objects_v2.return_value={'Contents':[], 'IsTruncated':False}
+    client.list_multipart_uploads.return_value={'Uploads':[], 'IsTruncated':False}
     http = Mock()
     response = Mock(status_code=200, headers={'Content-Type':'video/mp4'}, content=b'Clips Social Bot storage probe')
     response.iter_content.return_value = iter([b'video'])
@@ -27,11 +29,11 @@ def test_r2_upload_once(tmp_path):
     client.head_object.side_effect = ClientError({'Error': {'Code':'404'}}, 'HeadObject')
     url = s.upload(video)
     assert url.endswith('.mp4')
-    client.upload_file.assert_called_once()
+    client.put_object.assert_called_once()
     client.head_object.side_effect = None
     response.iter_content.return_value = iter([b'video'])
     assert s.upload(video) == url
-    client.upload_file.assert_called_once()
+    client.put_object.assert_called_once()
 
 
 def test_public_url_requires_success():
