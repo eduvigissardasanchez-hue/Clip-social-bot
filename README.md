@@ -243,6 +243,10 @@ del primer turno, y un minuto después de iniciar sesión. Activa `StartWhenAvai
 una ejecución perdida. La tarea usa `.venv\Scripts\pythonw.exe`, sin ventana
 permanente, y conserva los resultados en `logs\bot.log`.
 
+La comprobación interpreta los valores predeterminados que Windows puede omitir
+al exportar la tarea. Si encuentra un ajuste incompatible, muestra el nombre del
+campo y su valor. `StartWhenAvailable` debe estar activado explícitamente.
+
 La tarea usa tu sesión interactiva y no guarda contraseñas. Si Windows está
 apagado, suspendido o sin tu sesión, el mantenimiento se realizará cuando
 vuelvas e inicies sesión. Los posts ya programados los publica Buffer aunque

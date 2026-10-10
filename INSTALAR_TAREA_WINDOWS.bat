@@ -10,6 +10,6 @@ if not exist ".venv\Scripts\python.exe" (
 )
 ".venv\Scripts\python.exe" -m app.windows_task
 set "RESULT=%ERRORLEVEL%"
-if not "%RESULT%"=="0" echo No se pudo instalar. Revisa el error y los permisos del Programador de tareas Windows.
+if not "%RESULT%"=="0" echo El instalador no pudo completar el proceso. Revisa el detalle anterior.
 pause
 exit /b %RESULT%

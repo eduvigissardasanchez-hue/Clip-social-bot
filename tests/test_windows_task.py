@@ -141,3 +141,79 @@ def test_missing_python_stops_before_windows_calls(tmp_path):
 def test_invalid_user_sid_rejected(tmp_path):
     with pytest.raises(TaskError, match='usuario'):
         build_task_xml(tmp_path, 'someone')
+
+
+def windows_export_without_defaults(raw):
+    """Task Scheduler can omit properties whose values equal its defaults."""
+    document = parse_task_xml(raw)
+    for parent_path, name in [
+        ('t:Settings', 'Enabled'),
+        ('t:Settings', 'MultipleInstancesPolicy'),
+        ('t:Triggers/t:CalendarTrigger', 'Enabled'),
+        ('t:Triggers/t:LogonTrigger', 'Enabled'),
+        ('t:Principals/t:Principal', 'RunLevel'),
+    ]:
+        parent = document.find(parent_path, NS)
+        parent.remove(parent.find('t:' + name, NS))
+    return ET.tostring(document, encoding='utf-16')
+
+
+def test_verifies_windows_export_with_omitted_defaults(tmp_path):
+    root = project(tmp_path)
+    document = parse_task_xml(windows_export_without_defaults(build_task_xml(root, SID)))
+    verify_task(document, root, SID)
+
+
+def test_registration_accepts_normalized_readback_and_reinstall(tmp_path):
+    root = project(tmp_path)
+    existing = windows_export_without_defaults(build_task_xml(root, SID))
+    base_runner, calls, state = native_runner(root, existing)
+    def runner(args, **kwargs):
+        result = base_runner(args, **kwargs)
+        if '/Create' in args:
+            state['xml'] = windows_export_without_defaults(state['xml'])
+        return result
+    messages = []
+    register_task(root, SID, 'schtasks.exe', runner, messages.append)
+    assert '/F' in next(args for args in calls if '/Create' in args)
+    assert any('instalada y verificada' in message for message in messages)
+
+
+@pytest.mark.parametrize('path', [
+    't:Settings/t:StartWhenAvailable',
+    't:Settings/t:Enabled',
+    't:Triggers/t:CalendarTrigger/t:Enabled',
+    't:Triggers/t:LogonTrigger/t:Enabled',
+])
+def test_boolean_one_is_an_enabled_windows_xml_value(tmp_path, path):
+    root = project(tmp_path)
+    document = parse_task_xml(build_task_xml(root, SID))
+    document.find(path, NS).text = ' 1 '
+    verify_task(document, root, SID)
+
+
+@pytest.mark.parametrize('value', [None, 'false', '0', 'invalid'])
+def test_catchup_must_be_explicitly_enabled_and_error_names_setting(tmp_path, value):
+    root = project(tmp_path)
+    document = parse_task_xml(windows_export_without_defaults(build_task_xml(root, SID)))
+    setting = document.find('t:Settings/t:StartWhenAvailable', NS)
+    if value is None:
+        document.find('t:Settings', NS).remove(setting)
+    else:
+        setting.text = value
+    with pytest.raises(TaskError, match='StartWhenAvailable'):
+        verify_task(document, root, SID)
+
+
+@pytest.mark.parametrize('path, value, expected_error', [
+    ('t:Settings/t:Enabled', '0', 'Enabled'),
+    ('t:Settings/t:MultipleInstancesPolicy', 'Parallel', 'MultipleInstancesPolicy'),
+    ('t:Principals/t:Principal/t:RunLevel', 'HighestAvailable', 'RunLevel'),
+    ('t:Principals/t:Principal/t:LogonType', 'Password', 'LogonType'),
+])
+def test_incompatible_settings_are_not_treated_as_defaults(tmp_path, path, value, expected_error):
+    root = project(tmp_path)
+    document = parse_task_xml(build_task_xml(root, SID))
+    document.find(path, NS).text = value
+    with pytest.raises(TaskError, match=expected_error):
+        verify_task(document, root, SID)

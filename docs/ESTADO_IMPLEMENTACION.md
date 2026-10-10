@@ -21,6 +21,8 @@
 7. Instalador Windows mediante Python y schtasks/XML: diario + inicio de
    sesión, StartWhenAvailable, pythonw, sin consola ni contraseñas guardadas.
    Verifica la tarea registrada y no cambia la política de PowerShell.
+   La verificación admite valores predeterminados omitidos en el XML exportado
+   por Windows y detalla el campo incompatible cuando falla.
 
 ## Evidencia y límites
 

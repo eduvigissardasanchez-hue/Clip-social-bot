@@ -121,17 +121,41 @@ def owns_task(document, root, user_sid):
     )
 
 
+def _require_xml_value(document, path, expected, default=None):
+    """Compare effective XML values, including documented Windows defaults.
+
+    schtasks may omit default-valued properties on export. Boolean XML values
+    can also be written as 1/0. Never treat an unknown value as a default.
+    """
+    value = document.findtext(path, namespaces=NS)
+    omitted = value is None
+    actual = default if omitted else value.strip()
+    if expected in ('true', 'false'):
+        actual = {'1': 'true', '0': 'false'}.get(actual, actual)
+    if actual != expected:
+        name = path.rsplit('/', 1)[-1].removeprefix('t:')
+        detail = ' (valor predeterminado; campo omitido)' if omitted and default is not None else ''
+        raise TaskError(f'La tarea registrada no confirma {name}: Windows devuelve '
+                        f'{actual!r}{detail}; se esperaba {expected!r}.')
+
+
 def verify_task(document, root, user_sid):
     if not owns_task(document, root, user_sid):
         raise TaskError('La tarea registrada no coincide con este proyecto y usuario.')
-    required = {'StartWhenAvailable': 'true', 'MultipleInstancesPolicy': 'IgnoreNew', 'Enabled': 'true'}
-    for setting, expected in required.items():
-        if document.findtext(f't:Settings/t:{setting}', namespaces=NS) != expected:
-            raise TaskError('La tarea no confirma recuperacion de ejecuciones perdidas o activacion.')
-    principal = document.find('t:Principals/t:Principal', NS)
-    if (principal.findtext('t:LogonType', namespaces=NS) != 'InteractiveToken' or
-            principal.findtext('t:RunLevel', namespaces=NS) != 'LeastPrivilege'):
-        raise TaskError('La tarea no confirma ejecucion bajo tu sesion sin privilegios elevados.')
+    # Defaults from Microsoft's Task Scheduler schema. StartWhenAvailable is
+    # false by default, so omission must still fail the catch-up requirement.
+    required = {
+        'StartWhenAvailable': ('true', 'false'),
+        'MultipleInstancesPolicy': ('IgnoreNew', 'IgnoreNew'),
+        'Enabled': ('true', 'true'),
+    }
+    for setting, (expected, default) in required.items():
+        _require_xml_value(document, f't:Settings/t:{setting}', expected, default)
+    _require_xml_value(document, 't:Principals/t:Principal/t:LogonType', 'InteractiveToken')
+    # Windows uses low privileges by default (see Microsoft's "Security
+    # Contexts for Running Tasks"); an explicit HighestAvailable remains invalid.
+    _require_xml_value(document, 't:Principals/t:Principal/t:RunLevel',
+                       'LeastPrivilege', 'LeastPrivilege')
     triggers = document.find('t:Triggers', NS)
     daily = document.find('t:Triggers/t:CalendarTrigger', NS)
     logon = document.find('t:Triggers/t:LogonTrigger', NS)
@@ -140,10 +164,10 @@ def verify_task(document, root, user_sid):
     boundary = daily.findtext('t:StartBoundary', namespaces=NS) or ''
     if (not re.fullmatch(r'\d{4}-\d{2}-\d{2}T03:15:00(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?', boundary) or
             daily.findtext('t:ScheduleByDay/t:DaysInterval', namespaces=NS) != '1' or
-            daily.findtext('t:Enabled', namespaces=NS) != 'true' or
-            logon.findtext('t:Enabled', namespaces=NS) != 'true' or
             logon.findtext('t:UserId', namespaces=NS) != user_sid):
         raise TaskError('La tarea no confirma las 03:15 diarias y tu inicio de sesion.')
+    for trigger in ('CalendarTrigger', 'LogonTrigger'):
+        _require_xml_value(document, f't:Triggers/t:{trigger}/t:Enabled', 'true', 'true')
 
 
 def _run(runner, args):
