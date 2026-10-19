@@ -23,6 +23,8 @@
    Verifica la tarea registrada y no cambia la política de PowerShell.
    La verificación admite valores predeterminados omitidos en el XML exportado
    por Windows y detalla el campo incompatible cuando falla.
+   Admite el nombre de cuenta del usuario actual en LogonTrigger, contrastado
+   con su SID mediante whoami; probado con un XML real anonimizado de Windows.
 
 ## Evidencia y límites
 

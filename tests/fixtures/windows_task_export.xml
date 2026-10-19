@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Windows schtasks export: account/SID/paths anonymized and filled by tests. -->
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Description>Clips Social Bot: reconciliar Buffer y rellenar la cola local; requiere la sesion del usuario.</Description>
+    <URI>\ClipsSocialBotBuffer</URI>
+  </RegistrationInfo>
+  <Principals>
+    <Principal id="BotUser">
+      <UserId>SID</UserId>
+      <LogonType>InteractiveToken</LogonType>
+    </Principal>
+  </Principals>
+  <Settings>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <ExecutionTimeLimit>PT1H</ExecutionTimeLimit>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <IdleSettings>
+      <StopOnIdleEnd>true</StopOnIdleEnd>
+      <RestartOnIdle>false</RestartOnIdle>
+    </IdleSettings>
+  </Settings>
+  <Triggers>
+    <CalendarTrigger>
+      <StartBoundary>2026-10-19T03:15:00</StartBoundary>
+      <ScheduleByDay>
+        <DaysInterval>1</DaysInterval>
+      </ScheduleByDay>
+    </CalendarTrigger>
+    <LogonTrigger>
+      <Delay>PT1M</Delay>
+      <UserId>TESTPC\TestUser</UserId>
+    </LogonTrigger>
+  </Triggers>
+  <Actions Context="BotUser">
+    <Exec>
+      <Command>PYTHON</Command>
+      <Arguments>ARGUMENTS</Arguments>
+      <WorkingDirectory>ROOT</WorkingDirectory>
+    </Exec>
+  </Actions>
+</Task>

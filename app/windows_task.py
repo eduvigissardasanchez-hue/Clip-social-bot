@@ -139,7 +139,7 @@ def _require_xml_value(document, path, expected, default=None):
                         f'{actual!r}{detail}; se esperaba {expected!r}.')
 
 
-def verify_task(document, root, user_sid):
+def verify_task(document, root, user_sid, *, user_name=None):
     if not owns_task(document, root, user_sid):
         raise TaskError('La tarea registrada no coincide con este proyecto y usuario.')
     # Defaults from Microsoft's Task Scheduler schema. StartWhenAvailable is
@@ -161,11 +161,22 @@ def verify_task(document, root, user_sid):
     logon = document.find('t:Triggers/t:LogonTrigger', NS)
     if triggers is None or len(list(triggers)) != 2 or daily is None or logon is None:
         raise TaskError('La tarea no confirma disparadores diario y de inicio de sesion.')
-    boundary = daily.findtext('t:StartBoundary', namespaces=NS) or ''
-    if (not re.fullmatch(r'\d{4}-\d{2}-\d{2}T03:15:00(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?', boundary) or
-            daily.findtext('t:ScheduleByDay/t:DaysInterval', namespaces=NS) != '1' or
-            logon.findtext('t:UserId', namespaces=NS) != user_sid):
-        raise TaskError('La tarea no confirma las 03:15 diarias y tu inicio de sesion.')
+    boundary = (daily.findtext('t:StartBoundary', namespaces=NS) or '').strip()
+    if not re.fullmatch(r'\d{4}-\d{2}-\d{2}T03:15:00(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?', boundary):
+        raise TaskError(f'CalendarTrigger.StartBoundary: Windows devuelve {boundary!r}; '
+                        'se esperaba una fecha a las 03:15:00.')
+    _require_xml_value(document, 't:Triggers/t:CalendarTrigger/t:ScheduleByDay/t:DaysInterval', '1')
+    # Microsoft permits a SID or account name for LogonTrigger.UserId:
+    # https://learn.microsoft.com/en-us/windows/win32/taskschd/logontrigger-userid
+    # Only accept the name paired with this SID by native whoami /user output.
+    # An omitted UserId means ANY user and must not pass this verification.
+    logon_user = (logon.findtext('t:UserId', namespaces=NS) or '').strip()
+    identities = {user_sid.casefold()}
+    if user_name:
+        identities.add(user_name.casefold())
+    if logon_user.casefold() not in identities:
+        raise TaskError(f'LogonTrigger.UserId: Windows devuelve {logon_user!r}; '
+                        f'se esperaba el usuario actual {user_name or user_sid!r}.')
     for trigger in ('CalendarTrigger', 'LogonTrigger'):
         _require_xml_value(document, f't:Triggers/t:{trigger}/t:Enabled', 'true', 'true')
 
@@ -177,7 +188,7 @@ def _run(runner, args):
         raise TaskError('No se pudo ejecutar la herramienta nativa del Programador de tareas Windows.') from None
 
 
-def register_task(root, user_sid, schtasks, runner=subprocess.run, emit=print):
+def register_task(root, user_sid, schtasks, runner=subprocess.run, emit=print, *, user_name=None):
     root = Path(root).resolve()
     if not (root / '.venv' / 'Scripts' / 'pythonw.exe').is_file() or not (root / 'main.py').is_file():
         raise TaskError('Ejecuta CONFIGURAR.bat primero; falta Python del proyecto o main.py.')
@@ -207,11 +218,22 @@ def register_task(root, user_sid, schtasks, runner=subprocess.run, emit=print):
     result = _run(runner, [str(schtasks), '/Query', '/TN', TASK_NAME, '/XML'])
     if result.returncode != 0:
         raise TaskError('Se solicito registrar la tarea, pero no pudo verificarse. Abre el Programador de tareas para revisarla.')
-    verify_task(parse_task_xml(result.stdout), root, user_sid)
+    verify_task(parse_task_xml(result.stdout), root, user_sid, user_name=user_name)
     emit('Tarea instalada y verificada: ClipsSocialBotBuffer.')
     emit('Diaria a las 03:15 y al iniciar sesion (tras un minuto); recupera ejecuciones perdidas.')
     emit('No necesita consola abierta ni contrasenas guardadas. Consulta logs\\bot.log.')
     emit('Mantiene la politica de PowerShell. Usa DRY_RUN=false para programar de verdad.')
+
+
+def parse_user_identity(raw):
+    """Read the account name and SID together, never infer them from paths."""
+    rows = [row for row in csv.reader(io.StringIO(_decode(raw))) if row]
+    if len(rows) != 1 or len(rows[0]) != 2:
+        raise TaskError('Windows no devolvio una identidad de usuario reconocible.')
+    user_name, user_sid = (value.strip() for value in rows[0])
+    if not user_name or not re.fullmatch(r'S-\d+(?:-\d+)+', user_sid):
+        raise TaskError('Windows no devolvio el nombre y SID de tu usuario; no se instalara la tarea.')
+    return user_name, user_sid
 
 
 def main():
@@ -221,10 +243,9 @@ def main():
     result = _run(subprocess.run, [str(system / 'whoami.exe'), '/user', '/fo', 'csv', '/nh'])
     if result.returncode != 0:
         raise TaskError('Windows no pudo identificar tu usuario.')
-    match = re.search(r'\bS-\d+(?:-\d+)+\b', _decode(result.stdout))
-    if not match:
-        raise TaskError('No se obtuvo el SID de tu usuario; no se instalara la tarea.')
-    register_task(Path(__file__).resolve().parent.parent, match.group(), system / 'schtasks.exe')
+    user_name, user_sid = parse_user_identity(result.stdout)
+    register_task(Path(__file__).resolve().parent.parent, user_sid, system / 'schtasks.exe',
+                  user_name=user_name)
 
 
 if __name__ == '__main__':

@@ -246,6 +246,8 @@ permanente, y conserva los resultados en `logs\bot.log`.
 La comprobación interpreta los valores predeterminados que Windows puede omitir
 al exportar la tarea. Si encuentra un ajuste incompatible, muestra el nombre del
 campo y su valor. `StartWhenAvailable` debe estar activado explícitamente.
+Para el inicio de sesión acepta el SID o el nombre de cuenta que Windows devuelve
+para ese mismo usuario mediante `whoami /user`; no acepta un usuario distinto.
 
 La tarea usa tu sesión interactiva y no guarda contraseñas. Si Windows está
 apagado, suspendido o sin tu sesión, el mantenimiento se realizará cuando

@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 import pytest
 from app.windows_task import (
     NAMESPACE, NS, TASK_NAME, TaskError, build_task_xml, owns_task, parse_task_xml,
-    register_task, verify_task,
+    parse_user_identity, register_task, verify_task,
 )
 
 SID = 'S-1-5-21-1-2-3-1001'
@@ -217,3 +217,65 @@ def test_incompatible_settings_are_not_treated_as_defaults(tmp_path, path, value
     document.find(path, NS).text = value
     with pytest.raises(TaskError, match=expected_error):
         verify_task(document, root, SID)
+
+
+def captured_windows_export(root):
+    # Independent fixture based on a real Windows 11 export, with default-valued
+    # elements omitted and the logon SID normalized to a qualified account name.
+    document = parse_task_xml((Path(__file__).parent / 'fixtures' / 'windows_task_export.xml').read_bytes())
+    values = {
+        't:Principals/t:Principal/t:UserId': SID,
+        't:Actions/t:Exec/t:Command': str(root / '.venv' / 'Scripts' / 'pythonw.exe'),
+        't:Actions/t:Exec/t:Arguments': f'"{root / "main.py"}" maintain',
+        't:Actions/t:Exec/t:WorkingDirectory': str(root),
+    }
+    for path, value in values.items():
+        document.find(path, NS).text = value
+    return ET.tostring(document, encoding='utf-16')
+
+
+def test_real_export_registers_and_reinstalls_with_current_account_name(tmp_path):
+    root = project(tmp_path)
+    raw = captured_windows_export(root)
+    user_name, user_sid = parse_user_identity(f'"testpc\\testuser","{SID}"\r\n'.encode())
+    base_runner, calls, state = native_runner(root, raw)
+    def runner(args, **kwargs):
+        result = base_runner(args, **kwargs)
+        if '/Create' in args:
+            state['xml'] = raw  # Windows exports its normalized definition.
+        return result
+    messages = []
+    register_task(root, user_sid, 'schtasks.exe', runner, messages.append, user_name=user_name)
+    assert '/F' in next(args for args in calls if '/Create' in args)
+    assert any('instalada y verificada' in message for message in messages)
+
+
+@pytest.mark.parametrize('logon_user', ['', 'OtherPC\\TestUser', 'TESTPC\\OtherUser', 'S-1-5-99'])
+def test_logon_account_must_match_the_current_windows_identity(tmp_path, logon_user):
+    root = project(tmp_path)
+    document = parse_task_xml(captured_windows_export(root))
+    document.find('t:Triggers/t:LogonTrigger/t:UserId', NS).text = logon_user
+    with pytest.raises(TaskError, match='LogonTrigger.UserId'):
+        verify_task(document, root, SID, user_name='TESTPC\\TestUser')
+
+
+@pytest.mark.parametrize('path, value, error', [
+    ('t:Triggers/t:CalendarTrigger/t:StartBoundary', '2026-10-19T04:15:00', 'StartBoundary'),
+    ('t:Triggers/t:CalendarTrigger/t:ScheduleByDay/t:DaysInterval', '2', 'DaysInterval'),
+])
+def test_invalid_schedule_reports_the_exact_field(tmp_path, path, value, error):
+    root = project(tmp_path)
+    document = parse_task_xml(captured_windows_export(root))
+    document.find(path, NS).text = value
+    with pytest.raises(TaskError, match=error):
+        verify_task(document, root, SID, user_name='TESTPC\\TestUser')
+
+
+@pytest.mark.parametrize('raw', [
+    b'', b'"TESTPC\\User"', b'"TESTPC\\User","invalid"',
+    f'"","{SID}"'.encode(),
+    f'"TESTPC\\User","{SID}"\r\n"Other","S-1-5-99"'.encode(),
+])
+def test_unrecognizable_whoami_output_cannot_authorize_an_account_name(raw):
+    with pytest.raises(TaskError):
+        parse_user_identity(raw)
